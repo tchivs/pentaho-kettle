@@ -38,11 +38,31 @@
       <artifactId>kettle-ui-swt</artifactId>
       <scope>provided</scope>
     </dependency>
+    
+    <!-- Pentaho Reporting Libraries -->
     <dependency>
       <groupId>org.pentaho.reporting.engine</groupId>
       <artifactId>classic-core</artifactId>
       <version>${pentaho-reporting.version}</version>
+      <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.pentaho.reporting.library</groupId>
+      <artifactId>libloader</artifactId>
+      <version>${pentaho-reporting.version}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
     <!-- SWT it required to compile any version of any architecture will work -->
     <dependency>
       <groupId>org.eclipse.swt</groupId>

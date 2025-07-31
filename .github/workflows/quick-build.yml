@@ -1,0 +1,72 @@
+name: Quick Build
+
+on:
+  # 推送到主分支时触发
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - '**/*.java'
+      - '**/pom.xml'
+  
+  # 手动触发
+  workflow_dispatch:
+
+env:
+  MAVEN_OPTS: '-Xmx3g -Xms1g'
+  JAVA_VERSION: '17'
+
+jobs:
+  quick-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    
+    - name: Quick compile check
+      run: |
+        echo "Performing quick compile check..."
+        mvn clean compile -B -q \
+          -DskipTests \
+          -Dmaven.javadoc.skip=true \
+          -Dcheckstyle.skip=true \
+          -Dpmd.skip=true \
+          -Dspotbugs.skip=true \
+          -Denforcer.skip=true
+    
+    - name: Run unit tests (core modules only)
+      run: |
+        echo "Running core module tests..."
+        mvn test -B -q \
+          -pl core,engine,ui \
+          -Dmaven.javadoc.skip=true \
+          -Dcheckstyle.skip=true \
+          -Dpmd.skip=true \
+          -Dspotbugs.skip=true
+    
+    - name: Build summary
+      if: always()
+      run: |
+        if [[ "${{ job.status }}" == "success" ]]; then
+          echo "✅ Quick build completed successfully!"
+        else
+          echo "❌ Quick build failed!"
+        fi

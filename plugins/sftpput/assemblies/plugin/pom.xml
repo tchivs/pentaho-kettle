@@ -15,7 +15,7 @@
   <packaging>pom</packaging>
 
   <name>PDI SFTP put Plugin Distribution</name>
-  <description></description>
+  <description/>
 
   <dependencies>
     <dependency>
@@ -37,7 +37,7 @@
         <executions>
           <execution>
             <id>add-libs</id>
-            <phase>generate-resources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>copy-dependencies</goal>
             </goals>

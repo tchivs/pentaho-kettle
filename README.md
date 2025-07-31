@@ -28,21 +28,34 @@ Pentaho Data Integration uses the Maven framework.
 
 
 #### Pre-requisites for building the project:
-* Maven, version 3+
-* Java JDK 11
+* Maven, version 3.6+ (recommended: 3.9+)
+* Java JDK 17 (LTS)
 * This [settings.xml](https://raw.githubusercontent.com/pentaho/maven-parent-poms/master/maven-support-files/settings.xml) in your <user-home>/.m2 directory
+
+#### System Requirements:
+* **Operating System**: Windows, Linux, or macOS
+* **Memory**: Minimum 4GB RAM (recommended: 8GB+)
+* **Disk Space**: At least 2GB free space for build artifacts
+* **Network**: Internet connection for downloading dependencies
 
 #### Building it
 
 This is a Maven project, and to build it use the following command:
 
-```
+```bash
 $ mvn clean install
 ```
-Optionally you can specify -Drelease to trigger obfuscation and/or uglification (as needed)
 
-Optionally you can specify -Dmaven.test.skip=true to skip the tests (even though
-you shouldn't as you know)
+**Build Options:**
+* `-Drelease` - Trigger obfuscation and/or uglification (as needed)
+* `-Dmaven.test.skip=true` - Skip the tests (not recommended)
+* `-DskipTests` - Skip test execution but compile test classes
+* `-B` - Batch mode (non-interactive, recommended for CI/CD)
+
+**Quick compile check (faster):**
+```bash
+$ mvn clean compile -B -DskipTests
+```
 
 The build result will be a Pentaho package located in ```target```.
 
@@ -106,12 +119,67 @@ To get log as text file
 $ mvn clean install test >log.txt
 ```
 
+### Dependencies and Compatibility
+
+#### Java Version Support
+* **Java 17 (LTS)** - Primary supported version
+* **Java 11** - Legacy support (may require additional configuration)
+* **Java 8** - No longer supported
+
+#### Key Dependencies
+* **Maven**: 3.6+ (uses modern lifecycle phases)
+* **Jetty**: 12.x (requires Java 17+)
+* **Spring Framework**: 6.x
+* **Hibernate**: 6.x
+* **JAXB**: 2.3.1 (for Java 11+ compatibility)
+
+#### Known Issues
+* Some third-party libraries may show warnings with newer Java versions
+* Eclipse SWT dependencies are platform-specific
+* Network timeouts may occur during dependency download (retry recommended)
 
 __IntelliJ__
 
 * Don't use IntelliJ's built-in maven. Make it use the same one you use from the commandline.
   * Project Preferences -> Build, Execution, Deployment -> Build Tools -> Maven ==> Maven home directory
 
+### Troubleshooting
+
+#### Common Build Issues
+
+**Java Version Mismatch:**
+```bash
+# Check your Java version
+$ java -version
+$ mvn -version
+
+# Ensure JAVA_HOME points to JDK 17
+$ echo $JAVA_HOME  # Linux/macOS
+$ echo %JAVA_HOME% # Windows
+```
+
+**Maven Dependency Issues:**
+```bash
+# Clear Maven cache and retry
+$ mvn dependency:purge-local-repository
+$ mvn clean install
+
+# Force update snapshots
+$ mvn clean install -U
+```
+
+**Memory Issues:**
+```bash
+# Increase Maven memory
+$ export MAVEN_OPTS="-Xmx4g -Xms1g"  # Linux/macOS
+$ set MAVEN_OPTS=-Xmx4g -Xms1g       # Windows
+```
+
+**Network/Proxy Issues:**
+- Configure Maven proxy settings in `~/.m2/settings.xml`
+- Use `-Dmaven.wagon.http.retryHandler.count=3` for retry on network failures
+
+For more detailed troubleshooting, see: `doc/build-troubleshooting.md`
 
 ### Contributing
 
@@ -130,7 +198,7 @@ pex.:
 ```java
 public class MyTest {
   @ClassRule public static RestorePDIEnvironment env = new RestorePDIEnvironment();
-  #setUp()...
+  setUp(){}
   @Test public void testSomething() { 
     assertTrue( myMethod() ); 
   }

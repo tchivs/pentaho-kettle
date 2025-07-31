@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <name>PDI Dummy Plugin Distribution</name>
-  <description></description>
+  <description/>
 
   <dependencies>
     <dependency>

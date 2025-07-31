@@ -1,0 +1,139 @@
+name: Build Test (No Release)
+
+on:
+  # 手动触发测试构建
+  workflow_dispatch:
+    inputs:
+      build_profile:
+        description: 'Maven build profile'
+        required: false
+        default: 'default'
+        type: choice
+        options:
+          - 'default'
+          - 'osgi'
+      skip_tests:
+        description: 'Skip tests during build'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+  
+  # Pull request触发
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - '**/*.java'
+      - '**/pom.xml'
+      - 'assemblies/**'
+
+env:
+  MAVEN_OPTS: '-Xmx4g -Xms1g'
+  JAVA_VERSION: '17'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ env.JAVA_VERSION }}
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Configure build parameters
+      id: build_params
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "profile=${{ github.event.inputs.build_profile }}" >> $GITHUB_OUTPUT
+          echo "skip_tests=${{ github.event.inputs.skip_tests }}" >> $GITHUB_OUTPUT
+        else
+          echo "profile=default" >> $GITHUB_OUTPUT
+          echo "skip_tests=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    
+    - name: Run Maven build
+      run: |
+        echo "Starting Maven build with profile: ${{ steps.build_params.outputs.profile }}"
+
+        BUILD_ARGS="-B -V -Dmaven.javadoc.skip=true"
+        BUILD_ARGS="$BUILD_ARGS -Dmaven.wagon.http.retryHandler.count=3"
+        BUILD_ARGS="$BUILD_ARGS -Dmaven.wagon.httpconnectionManager.ttlSeconds=120"
+
+        if [[ "${{ steps.build_params.outputs.skip_tests }}" == "true" ]]; then
+          BUILD_ARGS="$BUILD_ARGS -DskipTests"
+        fi
+
+        if [[ "${{ steps.build_params.outputs.profile }}" == "osgi" ]]; then
+          BUILD_ARGS="$BUILD_ARGS -Dosgi"
+        fi
+
+        mvn clean package $BUILD_ARGS
+    
+    - name: Verify assemblies
+      run: |
+        echo "Checking assembly outputs..."
+        find assemblies -name "*.zip" -type f | while read file; do
+          echo "Found: $file ($(du -h "$file" | cut -f1))"
+        done
+        
+        # 检查主要分发包
+        if [ -f assemblies/client/target/pdi-ce-*.zip ]; then
+          echo "✅ Client distribution package found"
+        else
+          echo "❌ Client distribution package not found"
+        fi
+        
+        # 统计生成的文件
+        ZIP_COUNT=$(find assemblies -name "*.zip" -type f | wc -l)
+        echo "Total ZIP files generated: $ZIP_COUNT"
+    
+    - name: Upload build artifacts (on failure)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-failure-logs-${{ github.run_number }}
+        path: |
+          **/target/surefire-reports/
+          **/target/*.log
+          **/target/maven-archiver/
+        retention-days: 3
+    
+    - name: Upload assembly artifacts (for testing)
+      if: success() && github.event_name == 'workflow_dispatch'
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-assemblies-${{ github.run_number }}
+        path: |
+          assemblies/*/target/*.zip
+        retention-days: 1
+    
+    - name: Build summary
+      if: always()
+      run: |
+        if [[ "${{ job.status }}" == "success" ]]; then
+          echo "✅ Build completed successfully!"
+          ZIP_COUNT=$(find assemblies -name "*.zip" -type f | wc -l)
+          echo "📦 Generated $ZIP_COUNT distribution packages"
+        else
+          echo "❌ Build failed!"
+          echo "📋 Check the build logs for details"
+        fi

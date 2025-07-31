@@ -15,7 +15,7 @@
   <packaging>pom</packaging>
 
   <name>PDI Get File SFTP Plugin Distribution</name>
-  <description></description>
+  <description/>
 
   <dependencies>
     <dependency>
@@ -37,14 +37,14 @@
         <executions>
           <execution>
             <id>add-libs</id>
-            <phase>generate-resources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/assembly/lib</outputDirectory>
               <includeScope>compile</includeScope>
-              <excludeArtifactIds>get-file-sftp-plugins-impl,get-file-sftp-plugins-ui</excludeArtifactIds>
+              <excludeArtifactIds>get-file-sftp-plugin-impl,get-file-sftp-plugin-ui</excludeArtifactIds>
             </configuration>
           </execution>
         </executions>

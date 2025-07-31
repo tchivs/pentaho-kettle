@@ -845,7 +845,7 @@
         <executions>
           <execution>
             <id>copy-libs</id>
-            <phase>generate-resources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>copy-dependencies</goal>
             </goals>
@@ -862,7 +862,7 @@
               So, Following configuration helps to copy the both versions of jars to the lib.
              -->
             <id>copy-extra-dependencies</id>
-            <phase>generate-resources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>copy</goal>
             </goals>

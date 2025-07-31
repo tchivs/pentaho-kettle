@@ -14,7 +14,7 @@
   <packaging>pom</packaging>
 
   <name>PDI Dummy Plugin Assemblies</name>
-  <description></description>
+  <description/>
 
   <modules>
     <module>plugin</module>

@@ -35,13 +35,13 @@
       <name>GNU Lesser General Public License, Version 2.1</name>
       <url>https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt</url>
       <distribution>repo</distribution>
-      <comments></comments>
+      <comments/>
     </license>
     <license>
       <name>GNU Lesser General Public License, Version 3.0</name>
       <url>https://www.gnu.org/licenses/lgpl-3.0.txt</url>
       <distribution>repo</distribution>
-      <comments></comments>
+      <comments/>
     </license>
   </licenses>
 
@@ -69,6 +69,15 @@
     <powermock-module-junit4.version>1.7.3</powermock-module-junit4.version>
     <powermock-api-mockito.version>1.7.3</powermock-api-mockito.version>
     <java-hamcrest.version>2.0.0.0</java-hamcrest.version>
+
+    <!-- Hibernate JPA API version (legacy) -->
+    <hibernate-jpa-2.1-api.version>1.0.2.Final</hibernate-jpa-2.1-api.version>
+
+    <!-- Cache dependencies -->
+    <ehcache.version>3.10.8</ehcache.version>
+
+    <!-- JAXB dependencies for Java 11+ -->
+    <jaxb.version>2.3.1</jaxb.version>
   </properties>
 
   <dependencyManagement>
@@ -98,6 +107,33 @@
         <groupId>pentaho</groupId>
         <artifactId>metastore</artifactId>
         <version>${pentaho-metastore.version}</version>
+      </dependency>
+
+      <!-- Hibernate JPA API (legacy) - explicit version management -->
+      <dependency>
+        <groupId>org.hibernate.javax.persistence</groupId>
+        <artifactId>hibernate-jpa-2.1-api</artifactId>
+        <version>${hibernate-jpa-2.1-api.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- Cache dependencies -->
+      <dependency>
+        <groupId>org.ehcache</groupId>
+        <artifactId>ehcache</artifactId>
+        <version>${ehcache.version}</version>
+      </dependency>
+
+      <!-- JAXB dependencies for Java 11+ -->
+      <dependency>
+        <groupId>javax.xml.bind</groupId>
+        <artifactId>jaxb-api</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb.version}</version>
       </dependency>
 
       <!-- Jetty dependencies PPP-5150 -->
