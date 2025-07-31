@@ -89,8 +89,15 @@ jobs:
     - name: Validate dependencies
       run: |
         echo "Validating Maven dependencies..."
-        mvn dependency:resolve-sources -B -q || echo "Some source dependencies may be missing (non-critical)"
-        mvn dependency:analyze -B -q || echo "Dependency analysis completed with warnings"
+        echo "Resolving dependencies..."
+        mvn dependency:resolve -B -q || echo "Some dependencies may be missing (non-critical)"
+        echo "Downloading source dependencies..."
+        mvn dependency:sources -B -q || echo "Some source dependencies may be missing (non-critical)"
+        echo "Analyzing dependency usage..."
+        mvn dependency:analyze -B -q \
+          -Dmaven.compiler.source=17 \
+          -Dmaven.compiler.target=17 \
+          -Dmaven.compiler.release=17 || echo "Dependency analysis completed with warnings"
 
     - name: Build project
       run: |
