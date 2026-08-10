@@ -14,7 +14,6 @@
 
 package org.pentaho.s3common;
 
-import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
@@ -61,6 +61,7 @@ import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfilesConfigFile;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.regions.AwsProfileRegionProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -294,19 +295,26 @@ public abstract class S3CommonFileSystem extends AbstractFileSystem {
       || S3Util.hasChanged( awsSecretKeyCache, System.getProperty( S3Util.SECRET_KEY_SYSTEM_PROPERTY ) );
   }
 
-  /** region is set if explicitly set in env or configuration file is explicitly set */
+  /**
+   * Whether a region is explicitly set in the environment, from either:
+   * <ul>
+   * <li>an environment variable</li>
+   * <li>a configuration file, in the default location or specified by an environment variable</li>
+   * <li>the EC2 instance this is running on</li>
+   * </ul><br>
+   * This can be used to override the user-defined region, so beware of increasing its scope.
+   */
   protected boolean isEnvRegionSet() {
-    if ( System.getenv( S3Util.AWS_REGION ) != null || System.getenv( S3Util.AWS_CONFIG_FILE ) != null ) {
-      return true;
+    try {
+      return System.getenv( S3Util.AWS_REGION ) != null ||
+        // Region defined in a configuration file from env var or default location
+        StringUtils.isNotBlank( new AwsProfileRegionProvider().getRegion() ) ||
+        // When running on an Amazon EC2 instance getCurrentRegion will get its region. Null if not running in an EC2 instance
+        Regions.getCurrentRegion() != null;
+    } catch ( SdkClientException e ) {
+      // not actually thrown but part of interface
+      return false;
     }
-    //check if configuration file exists in default location
-    File awsConfigFolder = new File(
-      System.getProperty( "user.home" ) + File.separator + S3Util.AWS_FOLDER + File.separator + S3Util.CONFIG_FILE );
-    if ( awsConfigFolder.exists() ) {
-      return true;
-    }
-    //When running on an Amazon EC2 instance getCurrentRegion will get its region. Null if not running in an EC2 instance
-    return Regions.getCurrentRegion() != null;
   }
 
   public long getPartSize() {
